@@ -204,10 +204,27 @@ textarea{width:100%;font:12px ui-monospace,monospace;border-radius:10px;border:2
 .pay:active{transform:translateY(3px);box-shadow:0 1px 0 #2a2238}
 .pay .pl{font-size:16px;font-weight:900;line-height:1}.pay .pn{font-size:8.5px;font-weight:800}
 
-#start.hastip{padding-bottom:24px}
 #start.hastip{padding-bottom:96px}
 .pay .pn{white-space:nowrap}
-@media(max-height:700px){#start.hastip{justify-content:flex-start;padding-top:12px}#startCanvas{height:100px}#start h2{margin-bottom:10px}}
+
+
+/* ---- Home screen: fits any window; scrolls instead of cutting off ---- */
+#start{justify-content:flex-start;min-height:100%;padding-top:calc(env(safe-area-inset-top) + 16px)}
+#start>:first-child{margin-top:auto}
+#start #footDisc{margin-bottom:auto}
+#startCanvas{width:min(300px,80vw);height:auto;aspect-ratio:520/240}
+@media(max-height:780px){
+  #startCanvas{width:min(240px,70vw)}
+  #start h1{font-size:clamp(28px,min(7vw,7vh),48px)}
+  #start h2{font-size:clamp(13px,min(3.6vw,2.6vh),18px);margin-bottom:12px}
+  #start .btns{gap:8px}#start .btns button{padding:11px;font-size:16px}
+  #start .disc{margin-top:10px}
+}
+@media(max-height:600px){
+  #startCanvas{width:min(190px,60vw)}
+  #start .btns button{padding:9px;font-size:15px}
+}
+@media(max-height:520px){#startCanvas{display:none}}
 </style>
 </head>
 <body>
