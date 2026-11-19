@@ -195,12 +195,19 @@ textarea{width:100%;font:12px ui-monospace,monospace;border-radius:10px;border:2
 .tstrip .tt{display:flex;justify-content:space-between;gap:8px;font-weight:800;color:#3b2a9a}.tstrip .tt span{color:#2fa86a;white-space:nowrap}
 .tstrip .tm{font-size:.88em;margin-top:4px;color:#1d2340}
 
-.tipbox{width:min(340px,92vw);margin-top:16px;background:#ffffff14;border:2px solid #ffffff30;border-radius:18px;padding:12px 14px}
-.tipbox p{margin:0 0 6px;font-size:13px;line-height:1.4}.tipbox .t1{font-weight:700}.tipbox .t2{color:#ffe08a}
-.payrow{display:flex;gap:10px;justify-content:center;margin-top:8px}
-.pay{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;text-decoration:none;background:var(--pc);color:var(--pt);border:2.5px solid #2a2238;box-shadow:0 4px 0 #2a2238;border-radius:14px;padding:8px 4px 6px;transition:transform .1s}
+.tipbox{position:fixed;left:calc(env(safe-area-inset-left) + 10px);bottom:calc(env(safe-area-inset-bottom) + 10px);width:min(560px,calc(100vw - 20px));margin:0;background:#151a3dee;border:2px solid #ffffff30;border-radius:14px;padding:7px 9px;text-align:left;z-index:31;box-shadow:0 6px 18px #0007;display:flex;align-items:center;gap:10px}
+.tipbox.hidden{display:none}
+.tiptext{flex:1;min-width:0}
+.tipbox p{margin:0;font-size:10.5px;line-height:1.3}.tipbox .t1{font-weight:700}.tipbox .t2{color:#ffe08a;font-size:12.5px;margin:0 0 2px}
+.payrow{display:flex;gap:6px;flex:0 0 auto;margin:0}
+.pay{width:50px;flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:1px;text-decoration:none;background:var(--pc);color:var(--pt);border:2px solid #2a2238;box-shadow:0 3px 0 #2a2238;border-radius:10px;padding:4px 2px 3px;transition:transform .1s}
 .pay:active{transform:translateY(3px);box-shadow:0 1px 0 #2a2238}
-.pay .pl{font-size:24px;font-weight:900;line-height:1}.pay .pn{font-size:11px;font-weight:800}
+.pay .pl{font-size:16px;font-weight:900;line-height:1}.pay .pn{font-size:8.5px;font-weight:800}
+
+#start.hastip{padding-bottom:24px}
+#start.hastip{padding-bottom:96px}
+.pay .pn{white-space:nowrap}
+@media(max-height:700px){#start.hastip{justify-content:flex-start;padding-top:12px}#startCanvas{height:100px}#start h2{margin-bottom:10px}}
 </style>
 </head>
 <body>
@@ -228,12 +235,12 @@ textarea{width:100%;font:12px ui-monospace,monospace;border-radius:10px;border:2
     <button class="ghost" id="btnHow">❓ How to Play</button>
   </div>
   <div id="tipBox" class="tipbox hidden">
-    <p class="t1">Med-Surg Heroes is a free study game made for nursing students, by a nursing student. 💜</p>
-    <p class="t2"><b>Paying is NOT required…</b> but it is very, very, appreciated. 😅 💜</p>
+    <div class="tiptext"><p class="t2"><b>💜 Fuel a Future Nurse</b></p>
+    <p class="t1">Med-Surg Heroes is a free study game made for nursing students, by a nursing student. 💜</p></div>
     <div class="payrow" id="payRow"></div>
   </div>
   <p class="disc" id="cloudNote" style="color:#9fe8b8;opacity:1"></p>
-  <p class="disc">Not affiliated with or endorsed by Elsevier or HESI®.</p>
+  <p class="disc" id="footDisc">Not affiliated with or endorsed by Elsevier or HESI®.</p>
 </div>
 
 <div id="create" class="screen hidden">
@@ -2361,7 +2368,7 @@ function tipModal() {
   const opts = payLinks().map(x => [x.name, x.href, x.bg, x.fg, x.handle]);
   openModal('<div class="mhead"><h2>☕ Support This Free Game</h2><button class="ghost" id="tx">✕</button></div>' +
     '<p style="font-size:1.05em;line-height:1.5"><b>Med-Surg Heroes is a free study game made for nursing students, by a nursing student.</b> 💜</p>' +
-    '<div class="box pearl" style="font-size:1.05em"><b>Paying is NOT required…</b><br>but it is very, very, appreciated. 😅 💜</div>' +
+    '<div class="box pearl" style="font-size:1.1em;text-align:center"><b>💜 Fuel a Future Nurse</b></div>' +
     '<p class="small" style="margin:10px 0">Tips help keep the game free and fund new units, questions, and bosses. Pick whichever app you like:</p>' +
     '<div style="display:flex;flex-direction:column;gap:10px">' + opts.map(o => '<a href="' + o[1] + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none"><button style="width:100%;padding:14px;font-size:17px;background:' + o[2] + ';color:' + o[3] + '">' + o[0] + '<br><span style="font-size:12px;font-weight:600;opacity:.9">' + esc(o[4]) + "</span></button></a>").join("") + "</div>" +
     '<p class="small" style="margin-top:12px">Opens the app or website so you can choose any amount. Every dollar = more study content. Thank you! 🙏</p>',
@@ -2389,7 +2396,7 @@ function initStart() {
     p.onclick = () => { Snd.ctx(); SLOT = 1; const s = loadSlot(1); if (s) { S = s; enterGame(false); } else openCreator(false); };
   }
   const ba = $("#btnAcct"); if (ba) ba.onclick = () => { Snd.ctx(); Supa.accountModal(); };
-  const tb = $("#tipBox"); if (tb) { tb.classList.toggle("hidden", !tipsOn()); $("#payRow").innerHTML = payLinks().map(o => '<a class="pay" href="' + o.href + '" target="_blank" rel="noopener noreferrer" style="--pc:' + o.bg + ';--pt:' + o.fg + '" aria-label="Tip with ' + o.name + '"><span class="pl">' + o.letter + '</span><span class="pn">' + o.name + "</span></a>").join(""); }
+  const tb = $("#tipBox"); if (tb) { tb.classList.toggle("hidden", !tipsOn()); $("#start").classList.toggle("hastip", tipsOn()); $("#payRow").innerHTML = payLinks().map(o => '<a class="pay" href="' + o.href + '" target="_blank" rel="noopener noreferrer" style="--pc:' + o.bg + ';--pt:' + o.fg + '" aria-label="Tip with ' + o.name + '"><span class="pl">' + o.letter + '</span><span class="pn">' + o.name + "</span></a>").join(""); }
   $("#btnHow").onclick = () => { S = S || newSave("Nurse", defaultLook()); howTo(); };
   const sc = $("#startCanvas"); const g = sc.getContext("2d"); sc.width = 520; sc.height = 240;
   const looks = [{ ...defaultLook(), skin: 5, hairStyle: 2, hairColor: 0, scrub: 0 }, { ...defaultLook(), body: 1, skin: 1, hairStyle: 0, hairColor: 4, scrub: 0, glasses: 1 }, { ...defaultLook(), body: 1, fhair: 1, skin: 6, hairStyle: 4, hairColor: 0, scrub: 2, steth: 2 }, { ...defaultLook(), skin: 3, hairStyle: 7, hairColor: 9, scrub: 5 }];
