@@ -26,6 +26,7 @@ window.HH_SUPABASE = {
      cashapp = your Cash App $cashtag (without the $)
    The Support button only appears once at least one is filled in.
    ===================================================================== */
+window.SIMPLE_START = true; /* one save per player: Play continues or starts a new game */
 window.HH_TIPS = {
   paypal: "madilam1",
   venmo: "madilam10",
@@ -179,7 +180,7 @@ body.rm *{animation:none!important;transition:none!important}
 .kbd{font-family:ui-monospace,monospace;background:#eef0fa;padding:1px 6px;border-radius:6px}
 textarea{width:100%;font:12px ui-monospace,monospace;border-radius:10px;border:2px solid #ccd;padding:8px}
 
-#sheet.room{max-height:calc(100vh - 64px - env(safe-area-inset-top))}#sheet.room .card{max-height:calc(100vh - 64px - env(safe-area-inset-top));min-height:calc(100vh - 64px - env(safe-area-inset-top))}
+#sheet.room{max-height:62vh}#sheet.room .card{max-height:62vh}
 #sheet .card{max-height:84vh}
 
 .hbtn{border-color:transparent!important;box-shadow:none!important}
@@ -211,7 +212,7 @@ textarea{width:100%;font:12px ui-monospace,monospace;border-radius:10px;border:2
 /* ---- Home screen: fits any window; scrolls instead of cutting off ---- */
 #start{justify-content:flex-start;min-height:100%;padding-top:calc(env(safe-area-inset-top) + 16px)}
 #start>:first-child{margin-top:auto}
-#start #footDisc{margin-bottom:auto}
+#start #madeBy{margin-bottom:0}#start #footDisc{margin-top:2.6em !important;margin-bottom:auto}
 #startCanvas{width:min(300px,80vw);height:auto;aspect-ratio:520/240}
 @media(max-height:780px){
   #startCanvas{width:min(240px,70vw)}
@@ -225,6 +226,19 @@ textarea{width:100%;font:12px ui-monospace,monospace;border-radius:10px;border:2
   #start .btns button{padding:9px;font-size:15px}
 }
 @media(max-height:520px){#startCanvas{display:none}}
+
+.pmon .vrow{display:flex;gap:8px;align-items:stretch;margin-top:6px}
+.pmon canvas.ekg{flex:1;min-width:0;height:44px;border-radius:8px;border:2px solid #2a2238;background:#0b1020}
+.pmon .vit{display:grid;grid-template-columns:1fr 1fr;gap:2px 8px;background:#0b1020;border:2px solid #2a2238;border-radius:8px;padding:4px 8px;font:800 12px ui-monospace,Menlo,monospace;align-content:center}
+.pmon .vit .hr{color:#4f8}.pmon .vit .sp{color:#5cf}.pmon .vit .bp{color:#ff7a7a}.pmon .vit .rr{color:#ffd54a}
+.pmon .sbar{margin-top:6px;font-size:12px}.pmon .sbar .stab{height:8px;background:#d8d4ee;border-radius:6px;overflow:hidden;margin-top:3px}.pmon .sbar .stab i{display:block;height:100%;transition:width .6s}
+.pmon.alarm{animation:alarmBox .7s infinite}@keyframes alarmBox{50%{box-shadow:0 0 0 3px #ff3d5a}}
+
+.fuelbtn{position:fixed;left:calc(env(safe-area-inset-left) + 12px);bottom:calc(env(safe-area-inset-bottom) + 12px);z-index:31;background:linear-gradient(135deg,#8e5cff,#d16ba5);color:#fff;font-size:14px;padding:10px 14px;border-radius:999px}
+#start.hastip{padding-bottom:76px}
+#madeBy{margin-top:14px !important}
+.payrow.big{display:flex;gap:10px;margin-top:8px}.payrow.big .pay{flex:1;width:auto;padding:12px 4px 10px;border-radius:14px}
+.payrow.big .pl{font-size:28px}.payrow.big .pn{font-size:13px}.pay .ph{font-size:10px;font-weight:600;opacity:.85}
 </style>
 </head>
 <body>
@@ -251,11 +265,8 @@ textarea{width:100%;font:12px ui-monospace,monospace;border-radius:10px;border:2
     <button class="blue hidden" id="btnAcct">☁️ Sign in to Save</button>
     <button class="ghost" id="btnHow">❓ How to Play</button>
   </div>
-  <div id="tipBox" class="tipbox hidden">
-    <div class="tiptext"><p class="t2"><b>💜 Fuel a Future Nurse</b></p>
-    <p class="t1">Med-Surg Heroes is a free study game made for nursing students, by a nursing student. 💜</p></div>
-    <div class="payrow" id="payRow"></div>
-  </div>
+  <p class="disc" id="madeBy">Med-Surg Heroes is a free study game made for nursing students, by a nursing student. 💜</p>
+  <button id="btnFuel" class="fuelbtn hidden">💜 Fuel a Future Nurse</button>
   <p class="disc" id="cloudNote" style="color:#9fe8b8;opacity:1"></p>
   <p class="disc" id="footDisc">Not affiliated with or endorsed by Elsevier or HESI®.</p>
 </div>
@@ -1803,27 +1814,50 @@ function boardSprite(c, x, y, w, h, R, done) {
   const L = LESSONS[R.id] || LESSONS[1];
   L.b.slice(0, 3).forEach((bk, i) => { rr(c, x + 10, y + 30 + i * 19, 14, 13, 3); c.fillStyle = bk[0]; c.fill(); c.fillStyle = "#1d2340"; c.font = "800 10px system-ui"; c.textAlign = "left"; c.fillText(bk[1], x + 30, y + 41 + i * 19); });
 }
+function drawPatient(c, x, y, st, rrate) {
+  const breath = Math.sin(T * (rrate / 60) * Math.PI * 2) * 2.5;
+  const skinP = st > 70 ? "#f2c9a0" : st > 40 ? "#e6d2a6" : "#d4cfb4";
+  rr(c, x - 52, y - 30, 104, 52, 22); c.fillStyle = "#fbfcff"; c.fill(); c.lineWidth = 2.5; c.strokeStyle = OUT; c.stroke();
+  c.beginPath(); c.ellipse(x, y - 4, 27, 25, 0, 0, 7); c.fillStyle = skinP; c.fill(); c.lineWidth = 3; c.stroke();
+  c.beginPath(); c.moveTo(x - 27, y - 8); c.bezierCurveTo(x - 30, y - 40, x + 30, y - 40, x + 27, y - 8); c.quadraticCurveTo(x + 10, y - 20, x - 8, y - 16); c.quadraticCurveTo(x - 20, y - 14, x - 27, y - 8); c.closePath(); c.fillStyle = "#8d6e63"; c.fill(); c.stroke();
+  const ey = y - 2; c.strokeStyle = OUT; c.lineWidth = 2.5;
+  if (st > 70) { [-10, 10].forEach(dx => { c.beginPath(); c.arc(x + dx, ey + 2, 4, Math.PI * 1.1, Math.PI * 1.9); c.stroke(); }); c.beginPath(); c.moveTo(x - 7, y + 10); c.quadraticCurveTo(x, y + 16, x + 7, y + 10); c.stroke(); }
+  else if (st > 40) { [-10, 10].forEach(dx => { c.beginPath(); c.moveTo(x + dx - 4, ey); c.lineTo(x + dx + 4, ey); c.stroke(); }); c.beginPath(); c.moveTo(x - 6, y + 12); c.lineTo(x + 6, y + 12); c.stroke(); }
+  else { [-10, 10].forEach(dx => { c.beginPath(); c.ellipse(x + dx, ey, 3.5, 4.5, 0, 0, 7); c.fillStyle = "#fff"; c.fill(); c.stroke(); c.beginPath(); c.arc(x + dx, ey + 1, 1.8, 0, 7); c.fillStyle = OUT; c.fill(); }); c.beginPath(); c.ellipse(x, y + 13, 5, 4, 0, 0, 7); c.fillStyle = "#6b2333"; c.fill(); c.stroke(); c.beginPath(); c.moveTo(x + 22, y - 18); c.quadraticCurveTo(x + 27, y - 10, x + 22, y - 8); c.quadraticCurveTo(x + 17, y - 10, x + 22, y - 18); c.fillStyle = "#8fd3ff"; c.fill(); c.lineWidth = 1.5; c.stroke(); }
+  if (st > 55) [-15, 15].forEach(dx => { const g = c.createRadialGradient(x + dx, y + 6, 0, x + dx, y + 6, 7); g.addColorStop(0, "rgba(255,110,130,.4)"); g.addColorStop(1, "rgba(255,110,130,0)"); c.fillStyle = g; c.beginPath(); c.arc(x + dx, y + 6, 7, 0, 7); c.fill(); });
+  c.strokeStyle = "#9fd9ff"; c.lineWidth = 2; c.beginPath(); c.moveTo(x - 26, y + 4); c.quadraticCurveTo(x, y + 9, x + 26, y + 4); c.stroke();
+  return breath;
+}
 function drawRoom(c) {
-  const R = roomCtx ? ROOMS[roomCtx.room - 1] : ROOMS[0], L = LESSONS[R.id] || LESSONS[1], col = UMAP.prio.color;
+  const st = roomCtx && roomCtx.stab != null ? roomCtx.stab : 70, v = vitalsFrom(st), alarm = st < 40, sl = stabLabel(st);
   c.fillStyle = "#1b2136"; c.fillRect(-400, -400, 1600, 1500);
-  const wg = c.createLinearGradient(0, 0, 0, 230); wg.addColorStop(0, "#e9e2ff"); wg.addColorStop(1, "#d7ccfb"); c.fillStyle = wg; c.fillRect(0, 0, 800, 230);
-  c.fillStyle = "#b9a8f2"; c.fillRect(0, 222, 800, 12); c.fillStyle = "rgba(255,255,255,.45)"; c.fillRect(0, 222, 800, 3);
-  c.save(); c.beginPath(); c.rect(0, 234, 800, 406); c.clip(); floorTiles(c, 0, 234, 800, 406, "#f3effd", "#e3dbf8", 56);
-  const pool = c.createRadialGradient(400, 380, 20, 400, 380, 330); pool.addColorStop(0, "rgba(255,255,255,.5)"); pool.addColorStop(1, "rgba(255,255,255,0)"); c.fillStyle = pool; c.fillRect(0, 234, 800, 406); c.restore();
-  // big lesson whiteboard
-  panel(c, 150, 18, 500, 196, 18, "#ffffff", 4);
-  rr(c, 150, 18, 500, 40, 18); c.fillStyle = col; c.fill(); c.lineWidth = 4; c.strokeStyle = OUT; c.stroke();
-  label(c, "ROOM " + R.num + " • " + R.name.toUpperCase(), 400, 46, 18);
-  L.b.forEach((bk, i) => { const bx = 168 + (i % 2) * 238, by = 70 + Math.floor(i / 2) * 62; rr(c, bx, by, 226, 52, 10); c.fillStyle = bk[0]; c.fill(); c.lineWidth = 2.5; c.strokeStyle = OUT; c.stroke(); label(c, bk[1], bx + 113, by + 22, 13); c.fillStyle = "rgba(255,255,255,.85)"; c.font = "700 10px system-ui"; c.textAlign = "center"; c.fillText(R.topic, bx + 113, by + 40); });
-  rr(c, 300, 214, 200, 10, 5); c.fillStyle = "#9aa3b8"; c.fill(); c.lineWidth = 2; c.strokeStyle = OUT; c.stroke();
-  // side shelves & window
-  rr(c, 30, 40, 100, 120, 14); const sky = c.createLinearGradient(0, 40, 0, 160); sky.addColorStop(0, "#7cc7ff"); sky.addColorStop(1, "#cdeeff"); c.fillStyle = sky; c.fill(); c.lineWidth = 4; c.strokeStyle = OUT; c.stroke(); c.fillStyle = "#fff"; c.fillRect(78, 40, 4, 120); c.fillRect(30, 98, 100, 4);
-  panel(c, 670, 40, 104, 150, 12, "#c48b5e", 3);
-  [["#e8505b", 0], ["#2f80ed", 1], ["#2fa86a", 2], ["#f0a020", 3]].forEach(([bc, i]) => { rr(c, 682 + i * 21, 56, 16, 50, 3); c.fillStyle = bc; c.fill(); c.lineWidth = 2; c.strokeStyle = OUT; c.stroke(); });
-  c.fillStyle = "#8d5f3d"; c.fillRect(674, 108, 96, 6); badgeIcon(c, 722, 150, 22, "🩺");
-  // study desks
-  [[150, 470], [400, 500], [650, 470]].forEach(([dx, dy]) => { softShadow(c, dx, dy + 40, 90, 12, .28); rr(c, dx - 80, dy - 10, 160, 50, 14); const g = c.createLinearGradient(0, dy - 10, 0, dy + 40); g.addColorStop(0, "#c48b5e"); g.addColorStop(1, "#8d5f3d"); c.fillStyle = g; c.fill(); c.lineWidth = 3; c.strokeStyle = OUT; c.stroke(); rr(c, dx - 40, dy - 4, 50, 34, 4); c.fillStyle = "#fffdf5"; c.fill(); c.lineWidth = 2; c.stroke(); c.fillStyle = "#c9cde0"; for (let k = 0; k < 4; k++) c.fillRect(dx - 34, dy + 3 + k * 7, 38, 2); rr(c, dx + 20, dy, 24, 20, 4); c.fillStyle = "#7b5cff"; c.fill(); c.stroke(); });
-  plant(c, 40, 602); plant(c, 760, 602);
+  const wg = c.createLinearGradient(0, 0, 0, 230); wg.addColorStop(0, "#cfe3f6"); wg.addColorStop(1, "#b7d2ee"); c.fillStyle = wg; c.fillRect(0, 0, 800, 230);
+  c.fillStyle = "#8fb3dc"; c.fillRect(0, 222, 800, 12); c.fillStyle = "rgba(255,255,255,.4)"; c.fillRect(0, 222, 800, 3);
+  c.save(); c.beginPath(); c.rect(0, 234, 800, 406); c.clip(); floorTiles(c, 0, 234, 800, 406, "#e6f1fb", "#d2e4f5", 56);
+  const pool = c.createRadialGradient(400, 420, 20, 400, 420, 330); pool.addColorStop(0, "rgba(255,255,255,.45)"); pool.addColorStop(1, "rgba(255,255,255,0)"); c.fillStyle = pool; c.fillRect(0, 234, 800, 406); c.restore();
+  // rolling vitals machine (center)
+  const mx = 330, my = 40, mw = 300, mh = 210;
+  softShadow(c, mx + mw / 2, 560, 90, 14, .35);
+  c.strokeStyle = OUT; c.lineWidth = 9; c.beginPath(); c.moveTo(mx + mw / 2, my + mh); c.lineTo(mx + mw / 2, 540); c.stroke(); c.strokeStyle = "#c3cad9"; c.lineWidth = 5; c.stroke();
+  [[-70, 0], [0, 8], [70, 0]].forEach(([dx, dy]) => { c.strokeStyle = OUT; c.lineWidth = 6; c.beginPath(); c.moveTo(mx + mw / 2, 540); c.lineTo(mx + mw / 2 + dx, 552 + dy); c.stroke(); c.beginPath(); c.arc(mx + mw / 2 + dx, 556 + dy, 7, 0, 7); c.fillStyle = "#2b2f4a"; c.fill(); c.lineWidth = 2.5; c.stroke(); });
+  rr(c, mx + mw / 2 - 40, 430, 80, 44, 8); c.fillStyle = "#dfe5f2"; c.fill(); c.lineWidth = 3; c.strokeStyle = OUT; c.stroke(); // basket
+  c.strokeStyle = "#e05a6a"; c.lineWidth = 3; c.beginPath(); c.moveTo(mx + mw / 2 - 20, 440); c.bezierCurveTo(mx + mw / 2 - 30, 470, mx + mw / 2 + 10, 470, mx + mw / 2 + 20, 448); c.stroke(); // BP cuff hose
+  panel(c, mx, my, mw, mh, 20, "#2b2f4a", 4);
+  rr(c, mx + 12, my + 12, mw - 24, mh - 50, 12); c.fillStyle = alarm && Math.sin(T * 10) > 0 ? "#3d0b16" : "#0b1020"; c.fill();
+  c.save(); rr(c, mx + 12, my + 12, mw - 24, mh - 50, 12); c.clip();
+  c.strokeStyle = "rgba(80,255,140,.07)"; c.lineWidth = 1; for (let x = mx + 12; x < mx + mw; x += 14) { c.beginPath(); c.moveTo(x, my); c.lineTo(x, my + mh); c.stroke(); }
+  const per = Math.max(22, 60 / v.hr * 90), off = T * 90; c.beginPath();
+  for (let i = 0; i <= mw - 30; i++) { const ph = (i + off) % per; let y = 0; if (ph < 2.5) y = -.25; else if (ph < 5) y = 1; else if (ph < 7.5) y = -.45; else if (ph > 13 && ph < 20) y = .18 * Math.sin((ph - 13) / 7 * Math.PI); if (alarm) y += Math.sin(i * .9 + T * 9) * .05; const yy = my + 66 - y * 38; i ? c.lineTo(mx + 15 + i, yy) : c.moveTo(mx + 15, yy); }
+  c.strokeStyle = "#4f8"; c.globalAlpha = .3; c.lineWidth = 7; c.stroke(); c.globalAlpha = 1; c.lineWidth = 2.4; c.stroke();
+  c.restore();
+  c.textAlign = "left"; c.font = "900 24px ui-monospace,Menlo,monospace"; c.fillStyle = "#4f8"; c.fillText("♥ " + v.hr, mx + 22, my + 140); c.fillStyle = "#5cf"; c.fillText("O₂ " + v.sp + "%", mx + 150, my + 140);
+  c.font = "800 16px ui-monospace,Menlo,monospace"; c.fillStyle = "#ff7a7a"; c.fillText("BP " + v.bs + "/" + v.bd, mx + 22, my + 162); c.fillStyle = "#ffd54a"; c.fillText("RR " + v.rr, mx + 170, my + 162);
+  rr(c, mx + 14, my + mh - 26, mw - 28, 14, 7); c.fillStyle = "#151830"; c.fill(); rr(c, mx + 14, my + mh - 26, Math.max(14, (mw - 28) * st / 100), 14, 7); c.fillStyle = sl[1]; c.fill();
+  c.font = "800 11px system-ui"; c.fillStyle = "#fff"; c.textAlign = "center"; c.fillText("STABILITY " + st + "% • " + sl[0].toUpperCase(), mx + mw / 2, my + mh - 15);
+  if (alarm) { const ag = c.createRadialGradient(mx + mw / 2, my + 90, 10, mx + mw / 2, my + 90, 220); ag.addColorStop(0, "rgba(255,40,70," + (.22 + .18 * Math.sin(T * 10)) + ")"); ag.addColorStop(1, "rgba(255,40,70,0)"); c.fillStyle = ag; c.beginPath(); c.arc(mx + mw / 2, my + 90, 220, 0, 7); c.fill(); label(c, "⚠ ALARM", mx + mw / 2, my + mh + 30, 22, "#ff3d5a"); }
+  // light dot on top
+  c.beginPath(); c.arc(mx + mw - 26, my - 2, 8, 0, 7); c.fillStyle = alarm && Math.sin(T * 10) > 0 ? "#ff3d5a" : "#4f8"; c.fill(); c.lineWidth = 2.5; c.strokeStyle = OUT; c.stroke();
+  plant(c, 60, 602); plant(c, 742, 602);
   rr(c, 350, 626, 100, 14, 6); c.fillStyle = "#2b2f4a"; c.fill();
   drawPlayer(c);
 }
@@ -2019,38 +2053,64 @@ function showLesson(rid) {
 const sheet = $("#sheet");
 function sheetCard() { sheet.classList.toggle("room", scene === "room" && !EX); sheet.innerHTML = ""; const c = el("div", "card"); sheet.appendChild(c); sheet.classList.remove("hidden"); return c; }
 function closeSheet() { sheet.classList.add("hidden"); sheet.innerHTML = ""; }
+const vitalsFrom = st => ({ hr: Math.round(72 + (100 - st) * .7), sp: Math.round(99 - (100 - st) * .13), bs: Math.round(128 - (100 - st) * .5), bd: Math.round(80 - (100 - st) * .3), rr: Math.round(14 + (100 - st) * .16) });
+const stabLabel = st => st >= 65 ? ["Stable", "#2fa86a"] : st >= 40 ? ["Guarded", "#f0a020"] : ["Critical", "#d64550"];
 function topicStrip(R, A) {
-  const L = LESSONS[R.id] || LESSONS[1];
-  return el("div", "tstrip", '<div class="tt">🎯 ' + esc(R.topic) + '<span>✔ ' + A.c + ' correct</span></div><div class="tm">🧠 ' + esc(L.m) + "</div>");
+  const L = LESSONS[R.id] || LESSONS[1], st = A.stab, v = vitalsFrom(st), sl = stabLabel(st);
+  const d = el("div", "tstrip pmon" + (st < 40 ? " alarm" : ""),
+    '<div class="tt">🎯 ' + esc(R.topic) + '<span>✔ ' + A.c + ' correct</span></div>' +
+    '<div class="vrow"><canvas class="ekg" width="300" height="44"></canvas><div class="vit"><b class="hr">♥ ' + v.hr + '</b><b class="sp">O₂ ' + v.sp + '%</b><b class="bp">' + v.bs + "/" + v.bd + '</b><b class="rr">RR ' + v.rr + "</b></div></div>" +
+    '<div class="sbar"><span>Stability: <b style="color:' + sl[1] + '">' + sl[0] + " " + st + '%</b></span><div class="stab"><i style="width:' + st + "%;background:" + sl[1] + '"></i></div></div>' +
+    '<div class="tm">🧠 ' + esc(L.m) + "</div>");
+  d.dataset.hr = v.hr; d.dataset.st = st; return d;
+}
+/* animated EKG traces in the question sheet */
+function drawMiniEKG() {
+  document.querySelectorAll("canvas.ekg").forEach(cv => {
+    const box = cv.closest(".pmon"); if (!box) return; const hr = +box.dataset.hr || 80, st = +box.dataset.st || 70;
+    const r = cv.getBoundingClientRect(); if (!r.width) return; const dp = Math.min(devicePixelRatio || 1, 2);
+    if (cv.width !== Math.round(r.width * dp)) { cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp); }
+    const g = cv.getContext("2d"); g.setTransform(dp, 0, 0, dp, 0, 0); const w = r.width, h = r.height;
+    g.fillStyle = st < 40 && Math.sin(T * 10) > 0 ? "#3d0b16" : "#0b1020"; g.fillRect(0, 0, w, h);
+    g.strokeStyle = "rgba(80,255,140,.08)"; g.lineWidth = 1; for (let x = 0; x < w; x += 12) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
+    const per = Math.max(18, 60 / hr * 70), off = T * 70, mid = h * .58, amp = h * .42;
+    g.beginPath(); for (let x = 0; x <= w; x++) { const ph = (x + off) % per; let v = 0; if (ph < 2) v = -.25; else if (ph < 4) v = 1; else if (ph < 6) v = -.45; else if (ph > 10 && ph < 16) v = .18 * Math.sin((ph - 10) / 6 * Math.PI); if (st < 40) v += Math.sin(x * .9 + T * 9) * .05; const y = mid - v * amp; x ? g.lineTo(x, y) : g.moveTo(x, y); }
+    g.strokeStyle = "#4f8"; g.globalAlpha = .3; g.lineWidth = 4; g.stroke(); g.globalAlpha = 1; g.lineWidth = 1.6; g.stroke();
+  });
 }
 function roomQuestionIds(r) { return ACTIVE_Q.filter(q => q.r === r).map(q => q.id); }
 function startRoom(r, resume) {
-  scene = "room"; roomCtx = { room: r }; P.x = 400; P.y = 630; P.dir = "up"; P.path = [];
-  if (!resume) S.active = { type: "room", room: r, order: shuffle(roomQuestionIds(r)), i: 0, c: 0, xp: 0, missed: [] };
+  scene = "room"; P.x = 400; P.y = 630; P.dir = "up"; P.path = [];
+  if (!resume) S.active = { type: "room", room: r, order: shuffle(roomQuestionIds(r)), i: 0, c: 0, xp: 0, missed: [], stab: 70 };
+  if (S.active.stab == null) S.active.stab = 70;
+  roomCtx = { room: r, stab: S.active.stab };
   save(); setHint(""); inputLocked = true;
-  walkTo(400, 400, () => { P.dir = "up"; roomIntro(r); });
+  walkTo(700, 480, () => { P.dir = "left"; roomIntro(r); });
 }
 function roomIntro(r) {
   const R = ROOMS[r - 1], L = LESSONS[r] || LESSONS[1], A = S.active;
-  dialog("Room " + R.num + ": " + R.name, "<b>Topic:</b> " + esc(R.topic) + " • " + A.order.length + " questions" + (A.i ? " (resuming at " + (A.i + 1) + ")" : "") + "<br>🧠 " + esc(L.m),
+  dialog("Room " + R.num + ": " + R.name, "<b>Topic:</b> " + esc(R.topic) + " • " + A.order.length + " questions" + (A.i ? " (resuming at " + (A.i + 1) + ")" : "") + "<br>🩺 Right answers raise stability. Wrong answers make it drop.<br>🧠 " + esc(L.m),
     [{ t: "📘 Quick review", c: "ghost", f: () => { showLesson(r); roomIntro(r); } }, { t: "Start ▶", c: "good", f: () => roomNext() }]);
 }
 function roomNext() {
   const A = S.active; if (!A) return; if (A.i >= A.order.length) { finishRoom(); return; }
   const q = QMAP[A.order[A.i]]; const card = sheetCard(); const R = ROOMS[A.room - 1];
-  const pause = el("button", "ghost", "⏸"); pause.title = "Pause"; pause.onclick = () => pauseMenu();
+  const pause = el("button", "ghost", "🏠 Home"); pause.title = "Return to menu"; pause.onclick = () => pauseMenu();
   renderQuestion(q, card, { header: "Room " + R.num + " • " + (A.i + 1) + "/" + A.order.length, progress: A.i / A.order.length * 100, monitor: topicStrip(R, A), extraHead: [pause],
-    resultLine: ok => ok ? "+" + xpFor(q, true) + " XP" : "Saved to your review vault 🧠",
+    resultLine: ok => ok ? "Vitals stabilizing ↑ +" + xpFor(q, true) + " XP" : "Vitals dropping ↓ (saved to your review vault)",
     onSubmit: res => {
       recordAnswer(q, res.ok, "room"); const xp = xpFor(q, res.ok);
-      if (res.ok) { A.c++; Snd.fx("correct"); P.mood = "celebrate"; P.moodT = 2; gainXP(xp, 2); } else { A.missed.push(q.id); Snd.fx("wrong"); P.mood = "sad"; P.moodT = 2; gainXP(xp, 0); }
-      A.xp += xp; const m = card.querySelector(".tstrip"); if (m) m.replaceWith(topicStrip(R, A)); save();
+      if (res.ok) { A.c++; A.stab = clamp(A.stab + 10, 0, 100); Snd.fx("correct"); P.mood = "celebrate"; P.moodT = 2; gainXP(xp, 2); }
+      else { A.missed.push(q.id); A.stab = clamp(A.stab - 15, 5, 100); Snd.fx("wrong"); if (A.stab < 40) setTimeout(() => Snd.fx("alarm"), 400); P.mood = "sad"; P.moodT = 2; gainXP(xp, 0); }
+      A.xp += xp; roomCtx.stab = A.stab; const m = card.querySelector(".tstrip"); if (m) m.replaceWith(topicStrip(R, A)); save();
     },
     onNext: () => { A.i++; save(); roomNext(); } });
 }
 function pauseMenu() {
-  openModal('<h2>⏸ Paused</h2><p>Your progress in this room is saved. Take a breath. 🌿</p><div class="qact"><button class="good grow" id="pr">▶ Resume</button><button class="ghost grow" id="pe">Save & leave room</button></div>', c => { c.querySelector("#pr").onclick = closeModal; c.querySelector("#pe").onclick = () => { closeModal(); closeSheet(); exitRoom(); }; });
+  openModal('<h2>🏠 Leave this room?</h2><p>Your progress here is saved. You can pick up at this question anytime. 🌿</p><div style="display:flex;flex-direction:column;gap:8px"><button class="good" id="pr">▶ Keep going</button><button class="blue" id="pe">🗺️ Back to the unit</button><button class="ghost" id="ph">🏠 Home screen</button></div>',
+    c => { c.querySelector("#pr").onclick = closeModal; c.querySelector("#pe").onclick = () => { closeModal(); closeSheet(); exitRoom(); }; c.querySelector("#ph").onclick = () => { save(); try { Cloud.flush(); } catch (e) { } try { Supa.flush(); } catch (e) { } closeModal(); setTimeout(() => location.reload(), 700); }; });
 }
+
 function exitRoom() {
   const r = roomCtx ? roomCtx.room : 1; transition(() => { scene = "unit"; const b = WORLD.unit.blocks.find(x => x.room === r); P.x = b.stand.x; P.y = b.stand.y; P.dir = "down"; P.path = []; roomCtx = null; inputLocked = false; setHint("Tap any room to study that topic • Rivera has tips"); hudUpdate(); });
 }
@@ -2066,7 +2126,7 @@ function finishRoom() {
   S.history.push({ t: Date.now(), type: "Room", label: "Room " + ROOMS[r - 1].num, c: A.c, n }); S.active = null; checkAch(); save();
   Snd.fx(A.c >= 7 ? "victory" : "unlock"); if (A.c >= 7) confetti(50);
   const card = sheetCard(); const pct = Math.round(A.c / n * 100);
-  card.innerHTML = '<h2 style="margin:4px 0">🏁 Room ' + ROOMS[r - 1].num + ": " + esc(ROOMS[r - 1].name) + " complete</h2>" + '<div class="grid2"><div class="tile">Score<b>' + A.c + "/" + n + '</b></div><div class="tile">Accuracy<b>' + pct + '%</b></div><div class="tile">XP earned<b>+' + (A.xp + bonusXP) + '</b></div><div class="tile">Coins<b>+' + (bonusC + A.c * 2) + "</b></div></div>" +
+  card.innerHTML = '<h2 style="margin:4px 0">🏁 Room ' + ROOMS[r - 1].num + ": " + esc(ROOMS[r - 1].name) + " complete</h2>" + '<div class="grid2"><div class="tile">Score<b>' + A.c + "/" + n + '</b></div><div class="tile">Accuracy<b>' + pct + '%</b></div><div class="tile">Final vitals<b>' + (A.stab >= 65 ? "Stable 💚" : A.stab >= 40 ? "Guarded 💛" : "Critical ❤️‍🩹") + '</b></div><div class="tile">XP earned<b>+' + (A.xp + bonusXP) + '</b></div><div class="tile">Coins<b>+' + (bonusC + A.c * 2) + "</b></div></div>" +
     (msg ? '<div class="box pearl" style="margin-top:10px">' + msg + "</div>" : "") +
     (A.missed.length ? '<h3>Missed (sent to your vault for spaced review)</h3><ul class="small">' + A.missed.map(id => "<li>" + esc(QMAP[id].obj) + "</li>").join("") + "</ul>" : '<p class="small">Flawless: no questions missed.</p>') +
     '<p class="small">' + (pct >= 80 ? "Outstanding clinical judgment." : pct >= 60 ? "Solid work. Replay to lock in what you missed." : "Every miss is a lesson. The vault will bring these back.") + '</p><div class="qact"><button class="good grow" id="rb">Back to unit</button><button class="ghost grow" id="rr">↻ Replay room</button></div>';
@@ -2307,7 +2367,7 @@ function examHistory() {
 /* ===================== MENUS ===================== */
 function mainMenu() {
   openModal('<div class="mhead"><h2>☰ Menu</h2><button class="ghost" id="mx">✕</button></div><div class="grid2">' +
-    [["av", "👩‍⚕️ Avatar & Shop"], ["nb", "📓 Notebook"], ["vt", "🧠 Missed Vault"], ["db", "📊 Weakness Dashboard"], ["ac", "🏅 Achievements"], ["hd", "☕ Huddle missions"], ["tw", "🏰 HESI Tower"], ["hp", "❓ How to Play"], ["bs", "🛠️ Build status"], ["st", "⚙️ Settings & sharing"], ["ac2", "☁️ Account"], ["tip", "☕ Support This Game"], ["qt", window.SIMPLE_START ? "🏠 Title screen" : "💾 Save & title screen"]].map(b => '<button class="ghost" style="padding:14px;text-align:left" id="m_' + b[0] + '">' + b[1] + "</button>").join("") + "</div>",
+    [["av", "👩‍⚕️ Avatar & Shop"], ["nb", "📓 Notebook"], ["vt", "🧠 Missed Vault"], ["db", "📊 Weakness Dashboard"], ["ac", "🏅 Achievements"], ["hd", "☕ Huddle missions"], ["tw", "🏰 HESI Tower"], ["hp", "❓ How to Play"], ["bs", "🛠️ Build status"], ["st", "⚙️ Settings & sharing"], ["ac2", "☁️ Account"], ["tip", "💜 Fuel a Future Nurse"], ["qt", window.SIMPLE_START ? "🏠 Title screen" : "💾 Save & title screen"]].map(b => '<button class="ghost" style="padding:14px;text-align:left" id="m_' + b[0] + '">' + b[1] + "</button>").join("") + "</div>",
     c => {
       c.querySelector("#mx").onclick = closeModal; const on = (id, f) => c.querySelector("#m_" + id).onclick = f;
       on("av", () => { closeModal(); openCreator(true); }); on("nb", notebook); on("vt", vaultView); on("db", dashboard); on("ac", achievements); on("hd", huddleMenu); on("tw", towerMenu); on("hp", howTo); on("bs", buildStatus); on("st", settings);
@@ -2363,13 +2423,13 @@ function settings() {
   openModal('<div class="mhead"><h2>⚙️ Settings</h2><button class="ghost" id="sx">✕</button></div>' + tg("sound", "🔊 Sound effects") + tg("music", "🎵 Music") + tg("ambient", "🏥 Ambient monitor beeps") + tg("reduced", "🌿 Reduced motion") + tg("big", "🔠 Larger text") +
     '<h3>☁️ Cloud save</h3><p class="small">' + (Supa.on ? "ON: every answer saves to your website account automatically. Sign in on any device to keep going." : Supa.enabled ? "Sign in (Menu → ☁️ Account) to save across devices. Until then, progress saves on this device." : Cloud.on ? "ON: every answer saves to your Claude account automatically. Open this game on any device while signed in to Claude and your progress is there." : "Not available in this view, so progress saves on this device only. Cloud save works when you open the game inside Claude while signed in.") + '</p><h3>💾 Backup / move your save</h3><div class="qact"><button class="ghost grow" id="ex">Export save code</button><button class="ghost grow" id="im">Import save code</button></div><textarea id="code" rows="3" placeholder="Save code appears here, or paste one to import"></textarea>' +
     '<h3>🤝 Free for classmates</h3><p class="small">This game is free to share. Send the .html file (or a link) to anyone. It needs no account, install, or internet, and each player\'s progress stays on their own device. Original practice content, not affiliated with Elsevier/HESI®.</p>' +
-    '<h3>Danger zone</h3><button class="bad" id="rs">Delete this save slot</button>',
+    '<h3>Danger zone</h3>' + (window.SIMPLE_START ? '<button class="bad" id="rs">Start over (erase my progress)</button>' : '<button class="bad" id="rs">Delete this save slot</button>') + '',
     c => {
       c.querySelector("#sx").onclick = closeModal;
       c.querySelectorAll("[data-k]").forEach(b => b.onclick = () => { const k = b.dataset.k; s[k] = !s[k]; applySettings(); save(); settings(); });
       c.querySelector("#ex").onclick = () => { const code = btoa(unescape(encodeURIComponent(JSON.stringify(S)))); const t = c.querySelector("#code"); t.value = code; t.select(); try { navigator.clipboard.writeText(code); toast("📋 Save code copied"); } catch (e) { } };
       c.querySelector("#im").onclick = () => { try { const o = JSON.parse(decodeURIComponent(escape(atob(c.querySelector("#code").value.trim())))); if (!o.look || !o.rooms) throw 0; S = migrate(o); save(); toast("✅ Save imported"); closeModal(); applySettings(); hudUpdate(); } catch (e) { toast("❌ That code didn't work"); } };
-      c.querySelector("#rs").onclick = () => askYes("Delete this save slot permanently?", async () => { Store.del(SLOT_KEY(SLOT)); try { await Cloud.remove(SLOT); } catch (e) { } try { await Supa.remove(SLOT); } catch (e) { } location.reload(); });
+      c.querySelector("#rs").onclick = () => askYes(window.SIMPLE_START ? "Erase all progress and start a brand-new nurse? This can't be undone." : "Delete this save slot permanently?", async () => { Store.del(SLOT_KEY(SLOT)); try { await Cloud.remove(SLOT); } catch (e) { } try { await Supa.remove(SLOT); } catch (e) { } location.reload(); });
     });
 }
 const PAY = (() => { const c = window.HH_TIPS || {}; const clean = v => String(v || "").trim().replace(/^[@$]/, "").replace(/^https?:\/\/[^/]+\/(u\/)?/i, "").replace(/[^A-Za-z0-9_.-]/g, ""); return { paypal: clean(c.paypal), venmo: clean(c.venmo), cashapp: clean(c.cashapp) }; })();
@@ -2382,13 +2442,10 @@ function payLinks() {
   return o;
 }
 function tipModal() {
-  const opts = payLinks().map(x => [x.name, x.href, x.bg, x.fg, x.handle]);
-  openModal('<div class="mhead"><h2>☕ Support This Free Game</h2><button class="ghost" id="tx">✕</button></div>' +
-    '<p style="font-size:1.05em;line-height:1.5"><b>Med-Surg Heroes is a free study game made for nursing students, by a nursing student.</b> 💜</p>' +
-    '<div class="box pearl" style="font-size:1.1em;text-align:center"><b>💜 Fuel a Future Nurse</b></div>' +
-    '<p class="small" style="margin:10px 0">Tips help keep the game free and fund new units, questions, and bosses. Pick whichever app you like:</p>' +
-    '<div style="display:flex;flex-direction:column;gap:10px">' + opts.map(o => '<a href="' + o[1] + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none"><button style="width:100%;padding:14px;font-size:17px;background:' + o[2] + ';color:' + o[3] + '">' + o[0] + '<br><span style="font-size:12px;font-weight:600;opacity:.9">' + esc(o[4]) + "</span></button></a>").join("") + "</div>" +
-    '<p class="small" style="margin-top:12px">Opens the app or website so you can choose any amount. Every dollar = more study content. Thank you! 🙏</p>',
+  openModal('<div class="mhead"><h2>💜 Fuel a Future Nurse</h2><button class="ghost" id="tx">✕</button></div>' +
+    '<p style="line-height:1.5">Med-Surg Heroes is a free study game made for nursing students, by a nursing student. Tips are never required, but they keep the game free and fund new units, questions, and bosses. Pick whichever app you like:</p>' +
+    '<div class="payrow big">' + payLinks().map(o => '<a class="pay" href="' + o.href + '" target="_blank" rel="noopener noreferrer" style="--pc:' + o.bg + ';--pt:' + o.fg + '" aria-label="Tip with ' + o.name + '"><span class="pl">' + o.letter + '</span><span class="pn">' + o.name + '</span><span class="ph">' + esc(o.handle) + "</span></a>").join("") + "</div>" +
+    '<p class="small" style="margin-top:12px">Opens the app so you can choose any amount. Thank you! 🙏</p>',
     c => { c.querySelector("#tx").onclick = closeModal; });
 }
 function applySettings() { document.body.classList.toggle("rm", S.settings.reduced); document.body.classList.toggle("big", S.settings.big); Snd.music(S.settings.music); hudUpdate(); }
@@ -2409,11 +2466,11 @@ function initStart() {
   const q = $("#quickCont"); if (li && false) { q.classList.remove("hidden"); q.textContent = "▶ Continue: " + li.name + " (Lv " + li.lvl + ")"; q.onclick = () => { SLOT = last; S = loadSlot(last); enterGame(false); }; }
   $("#btnPlay").onclick = () => { Snd.ctx(); showSlots(); };
   if (window.SIMPLE_START) {
-    q.classList.add("hidden"); const p = $("#btnPlay"); p.textContent = "▶ Play"; p.classList.add("good", "pulse"); p.style.fontSize = "22px";
-    p.onclick = () => { Snd.ctx(); SLOT = 1; const s = loadSlot(1); if (s) { S = s; enterGame(false); } else openCreator(false); };
+    q.classList.add("hidden"); const p = $("#btnPlay"); p.textContent = "▶ Play"; p.classList.add("good"); p.style.fontSize = "20px";
+    p.onclick = () => { Snd.ctx(); const last = +Store.get("hesiHeroes_last"); SLOT = loadSlot(1) ? 1 : (last && loadSlot(last) ? last : ([2, 3].find(k => loadSlot(k)) || 1)); const s = loadSlot(SLOT); if (s) { S = s; enterGame(false); } else openCreator(false); };
   }
   const ba = $("#btnAcct"); if (ba) ba.onclick = () => { Snd.ctx(); Supa.accountModal(); };
-  const tb = $("#tipBox"); if (tb) { tb.classList.toggle("hidden", !tipsOn()); $("#start").classList.toggle("hastip", tipsOn()); $("#payRow").innerHTML = payLinks().map(o => '<a class="pay" href="' + o.href + '" target="_blank" rel="noopener noreferrer" style="--pc:' + o.bg + ';--pt:' + o.fg + '" aria-label="Tip with ' + o.name + '"><span class="pl">' + o.letter + '</span><span class="pn">' + o.name + "</span></a>").join(""); }
+  const fb = $("#btnFuel"); if (fb) { fb.classList.toggle("hidden", !tipsOn()); $("#start").classList.toggle("hastip", tipsOn()); fb.onclick = () => { Snd.ctx(); tipModal(); }; }
   $("#btnHow").onclick = () => { S = S || newSave("Nurse", defaultLook()); howTo(); };
   const sc = $("#startCanvas"); const g = sc.getContext("2d"); sc.width = 520; sc.height = 240;
   const looks = [{ ...defaultLook(), skin: 5, hairStyle: 2, hairColor: 0, scrub: 0 }, { ...defaultLook(), body: 1, skin: 1, hairStyle: 0, hairColor: 4, scrub: 0, glasses: 1 }, { ...defaultLook(), body: 1, fhair: 1, skin: 6, hairStyle: 4, hairColor: 0, scrub: 2, steth: 2 }, { ...defaultLook(), skin: 3, hairStyle: 7, hairColor: 9, scrub: 5 }];
@@ -2471,6 +2528,8 @@ function loop(now) {
     if (fadeDir === 1) { fade += dt * 4; if (fade >= 1) { fade = 1; const f = fadeCb; fadeCb = null; fadeDir = -1; f && f(); computeCam(); } } else if (fadeDir === -1) { fade -= dt * 4; if (fade <= 0) { fade = 0; fadeDir = 0; } }
     if (fadeCb && S.settings.reduced) { const f = fadeCb; fadeCb = null; f(); }
     render();
+    if (scene === "room" && roomCtx && roomCtx.stab != null) { beepT += dt; const hr = 72 + (100 - roomCtx.stab) * .7; if (beepT > 60 / hr) { beepT = 0; Snd.fx("beep"); } }
+    if (!$("#sheet").classList.contains("hidden")) drawMiniEKG();
     if (B && !$("#boss").classList.contains("hidden")) drawBossArena(dt);
     if (EX) examTick();
   }
